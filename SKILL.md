@@ -17,15 +17,23 @@ Targets can be games, software, physical products, business processes, industria
 
 ## Modes and research budget
 
-Infer the mode from the arguments; default is **deep**. Budgets are ceilings, not targets — stop early once the evidence is sufficient. The user can override with `budget:N` (N = web searches).
+**The default mode is `scan`.** Run any other mode only when its exact word (`deep`, `repair`, `opportunity`, `verify`) appears in the arguments. Never upgrade a run on your own because the target looks interesting or the evidence is thin. If a scan finds holes worth more research, end by recommending `/findhole <target> deep` and stop.
 
-| Mode | Purpose | Web searches | Page fetches | Report |
-|---|---|---|---|---|
-| **scan** | Fast triage, 3–5 highest-value holes | ≤ 4 | ≤ 2 | Short form (see template) |
-| **deep** | Cross-source investigation, saturation check, ranked roadmap | ≤ 10 | ≤ 6 | Full form |
-| **repair** | Diagnose one failing experience/system, map and rank fixes | ≤ 8 | ≤ 5 | Full form, repair-focused |
-| **opportunity** | Underserved demand across products/competitors; build/buy/fork | ≤ 10 | ≤ 6 | Full form |
-| **verify** | Re-check a prior FINDHOLE report against current state | ≤ 5 | ≤ 3 | Delta only: what changed per hole |
+**Before your first search**, write this run header as the first line of your reply, so the mode and limits are visible and checkable:
+
+`FINDHOLE · mode: <mode> (<default|requested>) · budget: <E> evidence + <S> solution-check searches, <F> fetches`
+
+| Mode | Purpose | Evidence searches | Solution-check searches (reserved) | Page fetches | Report template |
+|---|---|---|---|---|---|
+| **scan** *(default)* | Fast triage, 3–5 highest-value holes | ≤ 3 | 2 | ≤ 2 | `templates/scan.md` |
+| **deep** | Cross-source investigation, ranked roadmap | ≤ 8 | 3 | ≤ 6 | `templates/full.md` |
+| **repair** | Diagnose one failing experience/system, rank fixes | ≤ 6 | 3 | ≤ 5 | `templates/full.md` |
+| **opportunity** | Underserved demand; build/buy/fork | ≤ 8 | 3 | ≤ 6 | `templates/full.md` |
+| **verify** | Re-check a prior FINDHOLE report | ≤ 3 | 2 | ≤ 3 | `templates/verify.md` |
+
+Budgets are ceilings, not targets: stop early once the evidence is sufficient. `budget:N` changes the evidence-search ceiling only. The reserved solution-check searches always stay.
+
+**Keep a running tally** of searches and fetches used, and put the final count in the report's `Budget used` line. If you go over, say by how much and why. Never hide it.
 
 Cost rules:
 - Use the cheapest search mode first; use deeper/extended/premium search only when a cheaper result is thin, stale or off-target.
@@ -37,7 +45,7 @@ Cost rules:
 ## Investigation protocol
 
 ### 0. Pin the target (1 search max)
-If the target name is ambiguous (a game vs. a film vs. a company), spend at most one search identifying it. State the interpretation as a labeled assumption and continue; ask the user only if two readings are equally likely and would lead to different research.
+If the target name is ambiguous (a game vs. a film vs. a company), spend at most one search identifying it (it counts as an evidence search). State the interpretation as a labeled assumption and continue; ask the user only if two readings are equally likely and would lead to different research.
 
 ### 1. Define the comparison
 - Identify target, version/date, domain, target user, use case, region if relevant, and the *expected outcome*.
@@ -58,14 +66,22 @@ If the target name is ambiguous (a game vs. a film vs. a company), spend at most
 - Assess frequency, severity, recurrence, impact, workaround burden and time sensitivity.
 - Use 5 Whys for a causal chain; fishbone/fault-tree thinking for interacting causes. Root causes stay hypotheses until tested. Ask what would disprove each major claim and flag contradictions.
 
-### 4. Search for already-filled holes (mandatory, but bounded)
-For each promising hole, check the channels that apply:
-1. Latest official patch, roadmap, feature flags, support response.
-2. Forks, issues, PRs, libraries, plugins, mods, workshop content, extensions, user scripts.
-3. Other products, vendors, services, DIY workflows, standards, research.
-4. Workarounds, abandoned solutions, reports that fixes don't work.
+### 4. Solution check — mandatory in every mode
+This step can't be skipped, shortened or traded for more evidence searches. It uses the **reserved** solution-check searches from the budget table, which can't be spent on anything else. Run it **after** you've drafted the hole list, so the searches can name the holes.
 
-**Stopping rule:** once you find two credible, current, maintained solutions covering the core use case, mark the hole SOLVED or PARTIAL and stop searching that hole. Spend the remaining budget on holes still OPEN or UNKNOWN.
+**Batch the holes so the check stays cheap.** Don't search hole by hole. Each search covers several holes at once by naming their key terms:
+1. **Official channel (always):** one search for the maker's fixes, e.g. `<target> patch notes OR changelog OR roadmap <hole terms>`. It covers announced fixes, planned fixes and deliberate tradeoffs.
+2. **Third-party channel (always):** one search for outside remedies, e.g. `<target> <hole terms> mod OR plugin OR tool OR workaround OR alternative` (swap in the domain's words: fork, extension, vendor, retrofit, service).
+3. **Third reserved search (deep/repair/opportunity only):** use it on the highest-impact hole still OPEN or UNKNOWN, to look for competing products or abandoned and failed attempts.
+
+Solutions that turn up in evidence searches count as well; note them as they appear. The reserved searches are still run, because a missing result has to come from a check that looked for fixes, not from evidence searches that weren't looking.
+
+**Rules for the hole ledger:**
+- Every hole gets a **Checked against** entry: the reserved search or source it was checked against.
+- A hole that wasn't covered by a solution-check search **must** be UNKNOWN, written `UNKNOWN (unchecked)`. It can't be OPEN.
+- A decision of ACT, PILOT or build needs its hole checked in **both** the official and the third-party channel. If that's missing, the strongest allowed decision is WATCH, plus the search that would settle it.
+
+**Stopping rule:** once you find two credible, current, maintained solutions covering the core use case, mark the hole SOLVED or PARTIAL and don't spend more on it.
 
 Before calling something a solution, check existence, current compatibility, maintenance, adoption, effectiveness, cost, licensing and limits — from search snippets or the solution's own page; deep testing is out of scope unless the user asks. Coverage labels, per hole:
 - **SOLVED** — current, credible solution addresses the important use case.
@@ -90,7 +106,7 @@ Load **only** the one file that matches the target from `references/playbooks/`:
 
 ## Output
 
-Follow `references/report-template.md` (full form for deep/repair/opportunity, short form for scan, delta form for verify). Open with a direct answer to **"Is there a meaningful unfilled hole worth acting on?"**
+Load **only** the template for the current mode from `references/templates/` (see the budget table). Don't read the other templates. Open with a direct answer to **"Is there a meaningful unfilled hole worth acting on?"**
 
 If file tools are available, save the report as `reports/findhole/<target-slug>-YYYY-MM-DD.md` in the current working project (add `-r2`, `-r3` rather than overwriting). Otherwise deliver it in chat. In the chat reply, give a short summary of the verdict and top actions — don't repeat the whole report.
 

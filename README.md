@@ -4,8 +4,8 @@
 
 ```
 /findhole Wardogs
-/findhole "Notion offline mode" scan
-/findhole our-checkout-flow repair budget:6
+/findhole "Notion offline mode" deep
+/findhole our-checkout-flow repair budget:4
 /findhole "budget 3D printers for schools" opportunity
 ```
 
@@ -13,7 +13,7 @@
 
 Most "find me an opportunity" prompts produce confident lists of ideas that already exist. FINDHOLE is built to avoid that:
 
-- **Mandatory "already solved?" check.** Every hole is labelled SOLVED / PARTIAL / STALE / OPEN / UNKNOWN, and UNKNOWN is never upgraded to "nobody has done this."
+- **Mandatory "already solved?" check.** Every run sets aside searches for checking the maker's fixes and outside remedies. Those searches can't be spent on anything else. Every hole records what it was checked against, an unchecked hole stays `UNKNOWN (unchecked)`, and nothing gets a build recommendation without being checked in both places.
 - **Counterevidence by design.** It samples positive reviews and developer intent, so deliberate tradeoffs and loud minorities don't become fake holes.
 - **Owner-only holes flagged.** Problems only the vendor can fix (server logic, anti-cheat, firmware) are separated from ones you can act on.
 - **Kill/watch is a real outcome.** Recommendations come with acceptance tests and stop conditions.
@@ -47,15 +47,17 @@ Restart Claude Code (or start a new session), then type `/findhole`.
 /findhole <target> [mode] [budget:N] [constraints]
 ```
 
-| Mode | Use it for | Web searches | Page fetches | Output |
-|---|---|---|---|---|
-| `scan` | Quick triage — is this worth a closer look? | ≤ 4 | ≤ 2 | Short table |
-| `deep` *(default)* | Full investigation and ranked roadmap | ≤ 10 | ≤ 6 | Full report |
-| `repair` | One specific thing that's broken | ≤ 8 | ≤ 5 | Full report, fix-focused |
-| `opportunity` | Underserved demand; build / buy / fork | ≤ 10 | ≤ 6 | Full report |
-| `verify` | Re-check an earlier FINDHOLE report | ≤ 5 | ≤ 3 | What changed |
+| Mode | Use it for | Evidence searches | Solution-check searches | Page fetches | Output |
+|---|---|---|---|---|---|
+| `scan` *(default)* | Quick triage — is this worth a closer look? | ≤ 3 | 2 | ≤ 2 | Short table |
+| `deep` | Full investigation and ranked roadmap | ≤ 8 | 3 | ≤ 6 | Full report |
+| `repair` | One specific thing that's broken | ≤ 6 | 3 | ≤ 5 | Full report, fix-focused |
+| `opportunity` | Underserved demand; build / buy / fork | ≤ 8 | 3 | ≤ 6 | Full report |
+| `verify` | Re-check an earlier FINDHOLE report | ≤ 3 | 2 | ≤ 3 | What changed |
 
-Budgets are ceilings. `budget:N` overrides the search limit. Add constraints in plain words: `"no coding, under $200, must work on Mac"`.
+With no mode word, a run is a **scan**. It only goes deeper when you type `deep`, `repair`, `opportunity` or `verify`. A scan that finds something worth more research tells you to rerun with `deep` instead of escalating on its own. Every run starts with a header line showing its mode and budget, and the report shows the searches it actually used.
+
+Budgets are ceilings. `budget:N` changes the evidence-search limit. The solution-check searches are always kept. Add constraints in plain words: `"no coding, under $200, must work on Mac"`.
 
 The skill only runs when you type `/findhole` (`disable-model-invocation: true`), so it never starts a research run on its own.
 
@@ -67,7 +69,7 @@ Report sections (deep mode): decision and bottom line · scope and what couldn't
 
 ## Cost
 
-Measured on one deep run (the example report): **9 web searches, 5 page fetches, about 46k tokens of conversation.** That was before the budgets above were added, so a deep run should now be similar or lower, and `scan` much lower. Your total session usage will be higher by whatever your own setup loads (tool definitions, MCP servers, other skills); that overhead is not from FINDHOLE. This is a single measurement, not a benchmark.
+Measured on one deep run (the example report): **9 web searches, 5 page fetches, about 46k tokens of conversation.** That was before budgets existed. A deep run is now capped at 11 searches and a scan at 5, and a scan loads only the short report template. Your total session usage will be higher by whatever your own setup loads (tool definitions, MCP servers, other skills); that overhead is not from FINDHOLE. This is a single measurement, not a benchmark.
 
 ## Requirements
 
@@ -92,7 +94,8 @@ Research only by default: it won't install mods, patch software, change producti
 findhole/
 ├── SKILL.md                     # the skill (loaded on /findhole)
 ├── references/
-│   ├── report-template.md       # full / short / delta report forms
+│   ├── templates/               # one report template per mode; only one is read per run
+│   │   └── scan.md  full.md  verify.md
 │   ├── playbooks/               # one file per domain; only one is read per run
 │   │   ├── games.md  software.md  hardware.md
 │   │   └── industrial.md  markets.md  repositories.md
